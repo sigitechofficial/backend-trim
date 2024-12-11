@@ -2,28 +2,31 @@
 // Path to your working directory
 $workingDir = '/home/trimworldwide/pb.trimworldwide.com';
 
-// Set up the correct environment variables for the shell
-$nodeBinPath = '/home/trimworldwide/node/bin'; // Path to node binaries
+// Absolute path to node and PM2 binaries
+$nodeBinPath = '/home/trimworldwide/.nvm/versions/node/v18.20.4/bin';
 
-// Set the PATH environment variable explicitly using putenv()
-putenv("PATH=$nodeBinPath:" . getenv('PATH')); // Prepend nodeBinPath to system PATH
+// Set the PATH environment variable explicitly
+putenv("PATH=$nodeBinPath:" . getenv('PATH')); // Append nodeBinPath to system PATH
 
-// Define the process name for clarity
+// Define the process name
 $processName = 'thetrim.js';
 
 // Commands for PM2 management
 $pm2StopDeleteCommand = "pm2 stop $processName || true && pm2 delete $processName || true";
 $pm2SaveCommand = "pm2 save";
 
-// Command to create the PM2 process and save it again
+// Command to install dependencies and restart the PM2 process
 $pm2CreateCommand = "npm install && pm2 start $processName && pm2 save";
 
 // Combine all commands
-$command = "export HOME=/home/theshippinghack && cd $workingDir && $pm2StopDeleteCommand && $pm2SaveCommand && $pm2CreateCommand 2>&1";
+$command = "export PATH=$nodeBinPath:\$PATH && export HOME=/home/trimworldwide && cd $workingDir && $pm2StopDeleteCommand && $pm2SaveCommand && $pm2CreateCommand 2>&1";
 
-// Execute the command
+// Execute the command and capture the output
 $output = shell_exec($command);
 
-// Output the result
-echo nl2br($output);
+// Output the result for debugging
+echo "<pre>";
+echo "Command Output:\n";
+echo htmlspecialchars($output);
+echo "</pre>";
 ?>
