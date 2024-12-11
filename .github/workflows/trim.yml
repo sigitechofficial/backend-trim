@@ -15,8 +15,17 @@ jobs:
       image: node:18.20.4
 
     steps:
-      - uses: actions/checkout@v2
+      # Checkout code into the root directory to avoid unnecessary nesting
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          path: .  # Ensures everything is checked out directly into the workspace root
 
+      # Debug - List files to verify structure
+      - name: Debug - List all files and directories
+        run: ls -R
+
+      # Cache node modules
       - name: Cache node modules
         uses: actions/cache@v2
         with:
@@ -25,8 +34,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
+      # Install dependencies
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: npm ci
+        working-directory: .  # Ensure npm runs in the correct root directory
 
   deploy_main:
     needs: build
@@ -34,9 +45,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Checkout code again for the deployment step
       - name: 🚚 Get latest code
         uses: actions/checkout@v2
+        with:
+          path: .
 
+      # Debug - Confirm deployment directory structure
+      - name: Debug - List files for deployment
+        run: ls -R
+
+      # Check deployment flag
       - name: Check deployment flag
         id: check-flag
         run: |
@@ -47,6 +66,7 @@ jobs:
             exit 0
           fi
 
+      # Create necessary configuration files
       - name: Create .env file dynamically
         run: |
           echo "Creating .env file..."
@@ -68,7 +88,7 @@ jobs:
           echo "Creating firebase.json..."
           echo "${{ secrets.FIREBASE_CONTENT_PROD }}" > firebase.json
 
-
+      # Sync files to production server
       - name: 📂 Sync files to production
         uses: SamKirkland/FTP-Deploy-Action@v4.2.0
         with:
@@ -77,56 +97,65 @@ jobs:
           password: ${{ secrets.PROD_FTP_PASSWORD }}
           debug: true
 
+      # Trigger npm install on the server
       - name: Trigger npm install on server
         run: |
-              echo "Triggering npm install via PHP script..."
-              curl -X GET "https://pb.trimworldwide.com/trigger.php"
+          echo "Triggering npm install via PHP script..."
+          curl -X GET "https://pb.trimworldwide.com/trigger.php"
         env:
-            HOME: /home/trimworldwide/
+          HOME: /home/trimworldwide/
 
   deploy_testing:
-              needs: build
-              if: github.ref == 'refs/heads/testing'
-              runs-on: ubuntu-latest
-          
-              steps:
-                
-                - name: 🚚 Get latest code
-                  uses: actions/checkout@v2
-                - name: Create .env file dynamically
-                  run: |
-                    echo "Creating .env file..."
-                    echo "${{ secrets.ENV_FILE_CONTENT_STAGE }}" > .env
-          
-                - name: Create config folder and files
-                  run: |
-                    echo "Creating config folder..."
-                    mkdir -p config
-                    echo "${{ secrets.CONFIG_JSON_CONTENT }}" > config/config.json
-          
-                - name: Create .htaccess file
-                  run: |
-                    echo "Creating .htaccess_stage file..."
-                    echo "${{ secrets.HTACCESS_CONTENT_STAGE }}" > .htaccess
-          
-                - name: Creating firebase.json file
-                  run: |
-                    echo "Creating firebase.json..."
-                    echo "${{ secrets.FIREBASE_CONTENT_STAGE }}" > firebase.json
-          
-                - name: 📂 Sync files to development
-                  uses: SamKirkland/FTP-Deploy-Action@v4.2.0
-                  with:
-                    server: ${{ secrets.STAGE_FTP_HOST }}
-                    username: ${{ secrets.STAGE_FTP_USERNAME }}
-                    password: ${{ secrets.STAGE_FTP_PASSWORD }}
-                    debug: true
-          
-                - name: Trigger npm install on server
-                  run: |
-                      echo "Triggering npm install and pm2 start via PHP script..."
-                      curl -X GET "https://sb.trimworldwide.com/trigger.php"
-                  env:
-                      HOME: /home/trimworldwide/
+    needs: build
+    if: github.ref == 'refs/heads/testing'
+    runs-on: ubuntu-latest
 
+    steps:
+      # Checkout code for testing deployment
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v2
+        with:
+          path: .
 
+      # Debug - Confirm testing deployment directory structure
+      - name: Debug - List files for testing deployment
+        run: ls -R
+
+      # Create necessary configuration files
+      - name: Create .env file dynamically
+        run: |
+          echo "Creating .env file..."
+          echo "${{ secrets.ENV_FILE_CONTENT_STAGE }}" > .env
+
+      - name: Create config folder and files
+        run: |
+          echo "Creating config folder..."
+          mkdir -p config
+          echo "${{ secrets.CONFIG_JSON_CONTENT }}" > config/config.json
+
+      - name: Create .htaccess file
+        run: |
+          echo "Creating .htaccess_stage file..."
+          echo "${{ secrets.HTACCESS_CONTENT_STAGE }}" > .htaccess
+
+      - name: Creating firebase.json file
+        run: |
+          echo "Creating firebase.json..."
+          echo "${{ secrets.FIREBASE_CONTENT_STAGE }}" > firebase.json
+
+      # Sync files to development server
+      - name: 📂 Sync files to development
+        uses: SamKirkland/FTP-Deploy-Action@v4.2.0
+        with:
+          server: ${{ secrets.STAGE_FTP_HOST }}
+          username: ${{ secrets.STAGE_FTP_USERNAME }}
+          password: ${{ secrets.STAGE_FTP_PASSWORD }}
+          debug: true
+
+      # Trigger npm install on the server
+      - name: Trigger npm install and pm2 start on server
+        run: |
+          echo "Triggering npm install and pm2 start via PHP script..."
+          curl -X GET "https://sb.trimworldwide.com/trigger.php"
+        env:
+          HOME: /home/trimworldwide/
