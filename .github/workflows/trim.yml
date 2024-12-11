@@ -27,7 +27,7 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-        working-directory: ./trim-backend
+        working-directory: ./pb.trimworldwide.com
 
   deploy_main:
     needs: build
