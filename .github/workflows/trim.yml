@@ -26,7 +26,7 @@ jobs:
             ${{ runner.os }}-node-
 
       - name: Install dependencies
-        run: npm i
+        run: npm ci
 
   deploy_main:
     needs: build
