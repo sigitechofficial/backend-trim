@@ -72,7 +72,7 @@ jobs:
               echo "Triggering npm install via PHP script..."
               curl -X GET "https://pb.trimworldwide.com/trigger.php"
         env:
-            HOME: /home/trimworldwide/
+            HOME: /home/trimworldwide
 
   deploy_testing:
     needs: build
@@ -117,4 +117,4 @@ jobs:
               echo "Triggering npm install and pm2 start via PHP script..."
               curl -X GET "https://sb.trimworldwide.com/trigger.php"
         env:
-            HOME: /home/trimworldwide/
+            HOME: /home/trimworldwide
