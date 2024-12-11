@@ -2,7 +2,7 @@ const express = require('express')
 // utf8mb4_general_ci
 const dotenv = require('dotenv')
 dotenv.config({ path: '../.env' })
-const bodyParser = require('body-parser')
+
 // const http = require('http');
 const cors = require('cors')
 
@@ -20,31 +20,25 @@ const customerRoute = require('./routes/userRoutes/customerRoute')
 const customerAuth = require('./routes/userRoutes/authRoute')
 const adminRoute = require('./routes/adminRoutes/adminRoute')
 const reportsRoute = require('./routes/salonRoutes/reportsRoute')
-const newReportsRoute = require('./routes/salonRoutes/newReportsRoute')
 const performanceRoute = require('./routes/salonRoutes/performanceRoute')
 const payoutRoute = require('./routes/payoutRoutes/payoutRoute')
-const webhookRoute = require('./routes/webhookRoutes/webhooks')
 // Use the workerRoute for the /workerinfo route
-
-// Middleware setup
 app.use(cors())
+app.use(express.json())
 
-// General routes use express.json() for parsing JSON bodies
-app.use('/salon/v1/auth', express.json(), salonAuth)
-app.use('/salon/v1', express.json(), salonRegistration)
-app.use('/salon/v1/employee', express.json(), employeeRoute)
-app.use('/salon/v1/bookings', express.json(), bookingRoute)
-app.use('/customer-auth', express.json(), customerAuth)
-app.use('/customer', express.json(), customerRoute)
-app.use('/admin', express.json(), adminRoute)
-app.use('/reports', express.json(), reportsRoute)
-app.use('/performance-dashboard', express.json(), performanceRoute)
-app.use('/payout', express.json(), payoutRoute)
-app.use('/new-reports', express.json(), newReportsRoute)
-
-// Use bodyParser.raw for webhooks to receive raw body (application/json)
-app.use('/webhook', bodyParser.raw({ type: 'application/json' }), webhookRoute)
-
+app.use('/salon/v1/auth', salonAuth)
+app.use('/salon/v1', salonRegistration)
+app.use('/salon/v1/employee', employeeRoute)
+app.use('/salon/v1/bookings', bookingRoute)
+// Customer
+app.use('/customer-auth', customerAuth)
+app.use('/customer', customerRoute)
+app.use('/admin', adminRoute)
+app.use('/reports', reportsRoute)
+//performance-dashboard
+app.use('/performance-dashboard', performanceRoute)
+//Employee Payout
+app.use('/employee-payout', payoutRoute)
 initializeWebSocket(server)
 // Route mounting
 // app.use((req, res, next) => {
